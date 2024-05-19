@@ -4,6 +4,7 @@ import (
 	"EphemoraApi/internal/models"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	_ "github.com/lib/pq"
 )
@@ -13,7 +14,7 @@ const (
 	url  = "user=newuser dbname=postgres password=Sampishet1 host=localhost sslmode=disable"
 )
 
-func InsertUser(user models.User) error {
+func InsertUser(user models.User, record models.Record) error {
 
 	if ins := isInserted(user.Email); ins != nil {
 		return ins
@@ -29,12 +30,32 @@ func InsertUser(user models.User) error {
 		return err
 	}
 
-	query := "INSERT INTO ephemora.users(email, password, nickname) VALUES ($1 , $2, $3)"
-	stmt, err := db.Prepare(query)
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec(user.Email, user.Password, user.Nickname)
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			err = fmt.Errorf("transaction rolled back due to panic: %v", p)
+		} else if err != nil {
+			tx.Rollback()
+			err = fmt.Errorf("transaction rolled back due to error: %v", err)
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	userQuery := "INSERT INTO ephemora.users(email, password, nickname) VALUES ($1 , $2, $3)"
+	_, err = tx.Exec(userQuery, user.Email, user.Password, user.Nickname)
+	if err != nil {
+		return err
+	}
+
+	recordQuery := "INSERT INTO ephemora.leaderboard(email, record, registration_date, update_date) VALUES ($1, $2, $3, $4)"
+	_, err = tx.Exec(recordQuery, record.Email, record.Record, record.RegistrationDate, record.UpdateDate)
+
 	if err != nil {
 		return err
 	}
@@ -53,7 +74,7 @@ func isInserted(email string) error {
 		return err
 	}
 
-	query := "SELECT COUNT(*) FROM ephemora.users WHERE email = $1"
+	query := "SELECT * FROM ephemora.users WHERE email = $1"
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		return err

@@ -6,22 +6,14 @@ import (
 	"time"
 )
 
-func UpdateRecord(record models.Record) error {
-	utcTime := record.UpdateDate.UTC()
-	record.UpdateDate = utcTime
+func UpdateRecord(recordDTO models.RecordDTO) error {
+	record := models.Record{
+		Email:      recordDTO.Email,
+		Record:     recordDTO.Record,
+		UpdateDate: time.Now().UTC(),
+	}
 
 	err := repository.UpdateRecord(record)
-	return err
-}
-
-func AddRecord(email string) error {
-	record := models.Record{
-		Email:            email,
-		Record:           0,
-		RegistrationDate: time.Now().UTC(),
-		UpdateDate:       time.Now().UTC(),
-	}
-	err := repository.InsertRecord(record)
 	return err
 }
 

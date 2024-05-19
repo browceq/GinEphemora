@@ -3,8 +3,8 @@ package models
 import "time"
 
 type Record struct {
-	Email            string
-	Record           int
-	RegistrationDate time.Time
-	UpdateDate       time.Time
+	Email            string    `json:"email"`
+	Record           int       `json:"record"`
+	RegistrationDate time.Time `json:"RegistrationDate"`
+	UpdateDate       time.Time `json:"UpdateDate"`
 }

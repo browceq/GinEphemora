@@ -6,31 +6,6 @@ import (
 	"errors"
 )
 
-func InsertRecord(record models.Record) error {
-	db, err := sql.Open(tsql, url)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		return err
-	}
-
-	query := "INSERT INTO ephemora.leaderboard(email, record, registrationDate, updateDate) VALUES ($1, $2, $3, $4)"
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		return err
-	}
-
-	_, err = stmt.Exec(record.Email, record.Record, record.RegistrationDate, record.UpdateDate)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func UpdateRecord(record models.Record) error {
 	db, err := sql.Open(tsql, url)
 	if err != nil {
@@ -43,7 +18,7 @@ func UpdateRecord(record models.Record) error {
 		return err
 	}
 
-	query := "Update ephemora.leaderboard SET record = $1, updateDate = $2 WHERE email = $3"
+	query := "Update ephemora.leaderboard SET record = $1, update_date = $2 WHERE email = $3 AND update_date <> $2 AND record <= (CURRENT_DATE - registration_date)"
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		return err

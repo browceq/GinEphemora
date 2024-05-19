@@ -4,10 +4,19 @@ import (
 	"EphemoraApi/internal/models"
 	"EphemoraApi/internal/repository"
 	"fmt"
+	"time"
 )
 
 func AddUser(user models.User) error {
-	err := repository.InsertUser(user)
+
+	record := models.Record{
+		Email:            user.Email,
+		Record:           0,
+		RegistrationDate: time.Now().UTC(),
+		UpdateDate:       time.Now().UTC(),
+	}
+
+	err := repository.InsertUser(user, record)
 	if err != nil {
 		fmt.Println(err)
 		return err

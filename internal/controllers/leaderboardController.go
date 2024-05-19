@@ -9,7 +9,7 @@ import (
 )
 
 func UpdateRecord(c *gin.Context) {
-	var newRecord models.Record
+	var newRecord models.RecordDTO
 	if err := c.ShouldBindJSON(&newRecord); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid JSON"})
 		return
