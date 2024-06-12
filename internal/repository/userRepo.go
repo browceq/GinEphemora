@@ -37,10 +37,16 @@ func InsertUser(user models.User, record models.Record) error {
 
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				return
+			}
 			err = fmt.Errorf("transaction rolled back due to panic: %v", p)
 		} else if err != nil {
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				return
+			}
 			err = fmt.Errorf("transaction rolled back due to error: %v", err)
 		} else {
 			err = tx.Commit()
@@ -94,33 +100,23 @@ func isInserted(email string) error {
 	return nil
 }
 
-func Login(user models.UserDTO) error {
+func Login(email string) (string, error) {
 
 	db, err := sql.Open(tsql, url)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer db.Close()
 
 	if err = db.Ping(); err != nil {
-		return err
+		return "", err
 	}
 
-	query := "SELECT count(*) FROM ephemora.users WHERE email = $1 and password = $2"
-	stmt, err := db.Prepare(query)
+	query := "SELECT password FROM ephemora.users WHERE email = $1"
+	var hashedPassword string
+	err = db.QueryRow(query, email).Scan(&hashedPassword)
 	if err != nil {
-		return err
+		return "", errors.New("неправильный логин или пароль")
 	}
-	result, err := stmt.Exec(user.Email, user.Password)
-	if err != nil {
-		return err
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows != 1 {
-		return errors.New("неправильный логин или пароль")
-	}
-	return nil
+	return hashedPassword, nil
 }

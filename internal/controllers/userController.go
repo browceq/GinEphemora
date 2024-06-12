@@ -32,6 +32,7 @@ func Login(c *gin.Context) {
 
 	if err := services.Login(user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to login. Check your email and password"})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Successful login"})
 
