@@ -2,6 +2,7 @@ package main
 
 import (
 	"EphemoraApi/internal/controllers"
+	"EphemoraApi/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,11 +10,18 @@ import (
 func main() {
 	server := gin.Default()
 
-	server.POST("/users/addUser", controllers.AddUser)
+	server.POST("/users/signUp", controllers.SignUp)
 	server.POST("/users/login", controllers.Login)
 
-	server.PUT("/leaderboard/update", controllers.UpdateRecord)
-	server.GET("/leaderboard/get", controllers.GetLeaderboard)
+	auth := server.Group("/")
+	auth.Use(middleware.AuthMiddleware())
+	{
+		auth.PUT("/leaderboard/update", controllers.UpdateRecord)
+		auth.GET("/leaderboard/get", controllers.GetLeaderboard)
+	}
 
-	server.Run(":8080")
+	err := server.Run(":8080")
+	if err != nil {
+		return
+	}
 }
