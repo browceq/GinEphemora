@@ -42,7 +42,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Проверка и извлечение утверждений (claims) из токена
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			c.Set("user_id", claims["user_id"])
+			c.Set("user_email", claims["user_email"])
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()

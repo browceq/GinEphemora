@@ -15,6 +15,18 @@ func UpdateRecord(c *gin.Context) {
 		return
 	}
 
+	userEmail, ok := c.Get("user_email")
+	if !ok {
+		c.JSON(400, gin.H{"error": "No email in your token"})
+	}
+	userEmailStr, ok := userEmail.(string)
+	if !ok {
+		c.JSON(400, gin.H{"error": "Invalid email in your token"})
+	}
+	if newRecord.Email != userEmailStr {
+		c.JSON(400, gin.H{"error": "Suspicious activity"})
+	}
+
 	err := services.UpdateRecord(newRecord)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update your record"})

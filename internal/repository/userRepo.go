@@ -14,8 +14,8 @@ const (
 	url  = "user=newuser dbname=postgres password=Sampishet1 host=localhost sslmode=disable"
 )
 
-func InsertUser(user models.User, record models.Record) error {
-
+func InsertUser(user models.User, record models.Record) (returnErr error) {
+	// Начальные проверки и подключение к базе данных
 	if ins := isInserted(user.Email); ins != nil {
 		return ins
 	}
@@ -35,38 +35,47 @@ func InsertUser(user models.User, record models.Record) error {
 		return err
 	}
 
+	// Отложенная функция для обработки транзакции и ошибок
 	defer func() {
 		if p := recover(); p != nil {
-			err := tx.Rollback()
-			if err != nil {
+			txErr := tx.Rollback()
+			if txErr != nil {
+				returnErr = fmt.Errorf("transaction rolled back due to panic: %v; rollback error: %v", p, txErr)
 				return
 			}
-			err = fmt.Errorf("transaction rolled back due to panic: %v", p)
-		} else if err != nil {
-			err := tx.Rollback()
-			if err != nil {
+			returnErr = fmt.Errorf("transaction rolled back due to panic: %v", p)
+			return
+		}
+
+		if returnErr != nil {
+			txErr := tx.Rollback()
+			if txErr != nil {
+				returnErr = fmt.Errorf("transaction rolled back due to error: %v; rollback error: %v", returnErr, txErr)
 				return
 			}
-			err = fmt.Errorf("transaction rolled back due to error: %v", err)
-		} else {
-			err = tx.Commit()
+			returnErr = fmt.Errorf("transaction rolled back due to error: %v", returnErr)
+			return
+		}
+
+		if commitErr := tx.Commit(); commitErr != nil {
+			returnErr = fmt.Errorf("transaction commit error: %v", commitErr)
 		}
 	}()
 
-	userQuery := "INSERT INTO ephemora.users(email, password, nickname) VALUES ($1 , $2, $3)"
-	_, err = tx.Exec(userQuery, user.Email, user.Password, user.Nickname)
-	if err != nil {
-		return err
+	// Выполнение запросов
+	userQuery := "INSERT INTO ephemora.users(email, password, nickname) VALUES ($1, $2, $3)"
+	_, returnErr = tx.Exec(userQuery, user.Email, user.Password, user.Nickname)
+	if returnErr != nil {
+		return
 	}
 
 	recordQuery := "INSERT INTO ephemora.leaderboard(email, record, registration_date, update_date) VALUES ($1, $2, $3, $4)"
-	_, err = tx.Exec(recordQuery, record.Email, record.Record, record.RegistrationDate, record.UpdateDate)
-
-	if err != nil {
-		return err
+	_, returnErr = tx.Exec(recordQuery, record.Email, record.Record, record.RegistrationDate, record.UpdateDate)
+	if returnErr != nil {
+		return
 	}
 
-	return nil
+	return
 }
 
 func isInserted(email string) error {
