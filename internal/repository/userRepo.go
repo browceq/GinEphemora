@@ -15,7 +15,6 @@ const (
 )
 
 func InsertUser(user models.User, record models.Record) (returnErr error) {
-	// Начальные проверки и подключение к базе данных
 	if ins := isInserted(user.Email); ins != nil {
 		return ins
 	}
@@ -35,7 +34,6 @@ func InsertUser(user models.User, record models.Record) (returnErr error) {
 		return err
 	}
 
-	// Отложенная функция для обработки транзакции и ошибок
 	defer func() {
 		if p := recover(); p != nil {
 			txErr := tx.Rollback()
@@ -62,7 +60,6 @@ func InsertUser(user models.User, record models.Record) (returnErr error) {
 		}
 	}()
 
-	// Выполнение запросов
 	userQuery := "INSERT INTO ephemora.users(email, password, nickname) VALUES ($1, $2, $3)"
 	_, returnErr = tx.Exec(userQuery, user.Email, user.Password, user.Nickname)
 	if returnErr != nil {
