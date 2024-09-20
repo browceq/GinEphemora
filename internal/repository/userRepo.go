@@ -122,7 +122,7 @@ func Login(email string) (string, error) {
 	var hashedPassword string
 	err = db.QueryRow(query, email).Scan(&hashedPassword)
 	if err != nil {
-		return "", errors.New("неправильный логин или пароль")
+		return "", errors.New("wrong login or password")
 	}
 	return hashedPassword, nil
 }

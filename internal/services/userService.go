@@ -39,7 +39,7 @@ func Login(user models.UserDTO) error {
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(user.Password))
 	if err != nil {
-		return errors.New("неправильный логин или пароль")
+		return errors.New("wrong login or password")
 	}
 	return nil
 }

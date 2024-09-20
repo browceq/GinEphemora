@@ -35,7 +35,7 @@ func UpdateRecord(record models.Record) error {
 	}
 
 	if rows != 1 {
-		return errors.New("ошибка обновления")
+		return errors.New("failed to update record")
 	}
 	return nil
 }
