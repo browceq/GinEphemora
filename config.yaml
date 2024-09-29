@@ -4,6 +4,6 @@ database:
   driver: "postgres"
   user: "newuser"
   dbname: "postgres"
-  password: "Sampishet1"
+  password: "qwerty"
   host: "localhost"
   sslmode: "disable"
