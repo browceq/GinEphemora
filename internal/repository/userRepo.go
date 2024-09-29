@@ -14,8 +14,21 @@ const (
 	url  = "user=newuser dbname=postgres password=Sampishet1 host=localhost sslmode=disable"
 )
 
-func InsertUser(user models.User, record models.Record) (returnErr error) {
-	if ins := isInserted(user.Email); ins != nil {
+type UserRepo interface {
+	InsertUser(user models.User, record models.Record) (returnErr error)
+	isInserted(email string) error
+	Login(email string) (string, error)
+}
+
+type userRepo struct {
+}
+
+func NewUserRepo() UserRepo {
+	return &userRepo{}
+}
+
+func (repo *userRepo) InsertUser(user models.User, record models.Record) (returnErr error) {
+	if ins := repo.isInserted(user.Email); ins != nil {
 		return ins
 	}
 
@@ -75,7 +88,7 @@ func InsertUser(user models.User, record models.Record) (returnErr error) {
 	return
 }
 
-func isInserted(email string) error {
+func (repo *userRepo) isInserted(email string) error {
 	db, err := sql.Open(tsql, url)
 	if err != nil {
 		return err
@@ -106,7 +119,7 @@ func isInserted(email string) error {
 	return nil
 }
 
-func Login(email string) (string, error) {
+func (repo *userRepo) Login(email string) (string, error) {
 
 	db, err := sql.Open(tsql, url)
 	if err != nil {

@@ -6,7 +6,18 @@ import (
 	"errors"
 )
 
-func UpdateRecord(record models.Record) error {
+type LeaderboardRepo interface {
+	UpdateRecord(record models.Record) error
+	SelectLeaderboard() ([]models.LeaderboardEntry, error)
+}
+
+type leaderboarRepo struct{}
+
+func NewLeaderboardRepo() LeaderboardRepo {
+	return &leaderboarRepo{}
+}
+
+func (lrRepo *leaderboarRepo) UpdateRecord(record models.Record) error {
 	db, err := sql.Open(tsql, url)
 	if err != nil {
 		return err
@@ -40,7 +51,7 @@ func UpdateRecord(record models.Record) error {
 	return nil
 }
 
-func SelectLeaderboard() ([]models.LeaderboardEntry, error) {
+func (lrRepo *leaderboarRepo) SelectLeaderboard() ([]models.LeaderboardEntry, error) {
 	db, err := sql.Open(tsql, url)
 	if err != nil {
 		return nil, err

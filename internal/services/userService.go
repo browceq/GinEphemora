@@ -9,7 +9,20 @@ import (
 	"time"
 )
 
-func AddUser(user models.User) error {
+type UserService interface {
+	AddUser(user models.User) error
+	Login(user models.UserDTO) error
+}
+
+type userService struct {
+	repo repository.UserRepo
+}
+
+func NewUserService(repo repository.UserRepo) UserService {
+	return &userService{repo}
+}
+
+func (service *userService) AddUser(user models.User) error {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 	if err != nil {
@@ -24,7 +37,7 @@ func AddUser(user models.User) error {
 		UpdateDate:       time.Now().UTC(),
 	}
 
-	err = repository.InsertUser(user, record)
+	err = service.repo.InsertUser(user, record)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -32,8 +45,8 @@ func AddUser(user models.User) error {
 	return nil
 }
 
-func Login(user models.UserDTO) error {
-	hashedPassword, err := repository.Login(user.Email)
+func (service *userService) Login(user models.UserDTO) error {
+	hashedPassword, err := service.repo.Login(user.Email)
 	if err != nil {
 		return err
 	}

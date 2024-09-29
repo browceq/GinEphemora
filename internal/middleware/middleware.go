@@ -10,9 +10,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Middleware interface {
+	AuthMiddleware() gin.HandlerFunc
+}
+
+type middleware struct{}
+
+func NewMiddleware() Middleware {
+	return &middleware{}
+}
+
 var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
-func AuthMiddleware() gin.HandlerFunc {
+func (middleware *middleware) AuthMiddleware() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
