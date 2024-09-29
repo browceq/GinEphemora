@@ -9,10 +9,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
+/*const (
 	tsql = "postgres"
 	url  = "user=newuser dbname=postgres password=Sampishet1 host=localhost sslmode=disable"
-)
+)*/
 
 type UserRepo interface {
 	InsertUser(user models.User, record models.Record) (returnErr error)
@@ -21,18 +21,19 @@ type UserRepo interface {
 }
 
 type userRepo struct {
+	driver, url string
 }
 
-func NewUserRepo() UserRepo {
-	return &userRepo{}
+func NewUserRepo(driver, url string) UserRepo {
+	return &userRepo{driver, url}
 }
 
-func (repo *userRepo) InsertUser(user models.User, record models.Record) (returnErr error) {
-	if ins := repo.isInserted(user.Email); ins != nil {
+func (uRepo *userRepo) InsertUser(user models.User, record models.Record) (returnErr error) {
+	if ins := uRepo.isInserted(user.Email); ins != nil {
 		return ins
 	}
 
-	db, err := sql.Open(tsql, url)
+	db, err := sql.Open(uRepo.driver, uRepo.url)
 	if err != nil {
 		return err
 	}
@@ -88,8 +89,8 @@ func (repo *userRepo) InsertUser(user models.User, record models.Record) (return
 	return
 }
 
-func (repo *userRepo) isInserted(email string) error {
-	db, err := sql.Open(tsql, url)
+func (uRepo *userRepo) isInserted(email string) error {
+	db, err := sql.Open(uRepo.driver, uRepo.url)
 	if err != nil {
 		return err
 	}
@@ -119,9 +120,9 @@ func (repo *userRepo) isInserted(email string) error {
 	return nil
 }
 
-func (repo *userRepo) Login(email string) (string, error) {
+func (uRepo *userRepo) Login(email string) (string, error) {
 
-	db, err := sql.Open(tsql, url)
+	db, err := sql.Open(uRepo.driver, uRepo.url)
 	if err != nil {
 		return "", err
 	}

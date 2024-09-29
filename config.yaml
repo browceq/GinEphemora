@@ -1,0 +1,9 @@
+server:
+  port: "8080"
+database:
+  driver: "postgres"
+  user: "newuser"
+  dbname: "postgres"
+  password: "Sampishet1"
+  host: "localhost"
+  sslmode: "disable"

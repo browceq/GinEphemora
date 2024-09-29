@@ -11,14 +11,16 @@ type LeaderboardRepo interface {
 	SelectLeaderboard() ([]models.LeaderboardEntry, error)
 }
 
-type leaderboarRepo struct{}
+type leaderboarRepo struct {
+	driver, url string
+}
 
-func NewLeaderboardRepo() LeaderboardRepo {
-	return &leaderboarRepo{}
+func NewLeaderboardRepo(driver, url string) LeaderboardRepo {
+	return &leaderboarRepo{driver, url}
 }
 
 func (lrRepo *leaderboarRepo) UpdateRecord(record models.Record) error {
-	db, err := sql.Open(tsql, url)
+	db, err := sql.Open(lrRepo.driver, lrRepo.url)
 	if err != nil {
 		return err
 	}
@@ -52,7 +54,7 @@ func (lrRepo *leaderboarRepo) UpdateRecord(record models.Record) error {
 }
 
 func (lrRepo *leaderboarRepo) SelectLeaderboard() ([]models.LeaderboardEntry, error) {
-	db, err := sql.Open(tsql, url)
+	db, err := sql.Open(lrRepo.driver, lrRepo.url)
 	if err != nil {
 		return nil, err
 	}
