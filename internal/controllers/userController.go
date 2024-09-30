@@ -3,12 +3,11 @@ package controllers
 import (
 	"EphemoraApi/internal/models"
 	"EphemoraApi/internal/services"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type UserController struct {
