@@ -1,21 +1,20 @@
 package controllers
 
 import (
+	"EphemoraApi/internal/middleware"
 	"EphemoraApi/internal/models"
 	"EphemoraApi/internal/services"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"net/http"
-	"os"
-	"time"
 )
 
 type UserController struct {
 	userService services.UserService
+	middleware  middleware.Middleware
 }
 
-func NewUserController(userService services.UserService) *UserController {
-	return &UserController{userService}
+func NewUserController(userService services.UserService, middleware middleware.Middleware) *UserController {
+	return &UserController{userService, middleware}
 }
 
 func (uC *UserController) SignUp(c *gin.Context) {
@@ -35,7 +34,6 @@ func (uC *UserController) SignUp(c *gin.Context) {
 
 func (uC *UserController) Login(c *gin.Context) {
 
-	var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 	var user models.UserDTO
 
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -48,14 +46,7 @@ func (uC *UserController) Login(c *gin.Context) {
 		return
 	}
 
-	expirationTime := time.Now().Add(15 * time.Minute)
-	claims := &jwt.MapClaims{
-		"user_email": user.Email,
-		"exp":        expirationTime.Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := uC.middleware.GenerateToken(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return

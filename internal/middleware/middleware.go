@@ -1,16 +1,19 @@
 package middleware
 
 import (
+	"EphemoraApi/internal/models"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type Middleware interface {
 	AuthMiddleware() gin.HandlerFunc
+	GenerateToken(user models.UserDTO) (string, error)
 }
 
 type middleware struct{}
@@ -61,4 +64,16 @@ func (middleware *middleware) AuthMiddleware() gin.HandlerFunc {
 		// Передача следующей функции
 		c.Next()
 	}
+}
+
+func (middleware *middleware) GenerateToken(user models.UserDTO) (string, error) {
+	expirationTime := time.Now().Add(15 * time.Minute)
+	claims := &jwt.MapClaims{
+		"user_email": user.Email,
+		"exp":        expirationTime.Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+	return tokenString, err
 }

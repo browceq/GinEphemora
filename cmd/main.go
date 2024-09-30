@@ -27,15 +27,15 @@ func main() {
 
 	server := gin.Default()
 
+	mid := middleware.NewMiddleware()
+
 	userRepo := repository.NewUserRepo(dbDriver, dbUrl)
 	userService := services.NewUserService(userRepo)
-	userController := controllers.NewUserController(userService)
+	userController := controllers.NewUserController(userService, mid)
 
 	leaderboardRepo := repository.NewLeaderboardRepo(dbDriver, dbUrl)
 	leaderboardService := services.NewLeaderboardService(leaderboardRepo)
 	leaderboardController := controllers.NewLeaderboardController(leaderboardService)
-
-	mid := middleware.NewMiddleware()
 
 	server.POST("/users/signUp", userController.SignUp)
 	server.POST("/users/login", userController.Login)
