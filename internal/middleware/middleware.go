@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+//go:generate mockgen -source=middleware.go -destination=mocks/mock.go
+
 type Middleware interface {
 	AuthMiddleware() gin.HandlerFunc
 	GenerateToken(user models.UserDTO) (string, error)

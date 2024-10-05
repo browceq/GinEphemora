@@ -9,17 +9,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-/*const (
-	tsql = "postgres"
-	url  = "user=newuser dbname=postgres password=Sampishet1 host=localhost sslmode=disable"
-)*/
-
-type UserRepo interface {
-	InsertUser(user models.User, record models.Record) (returnErr error)
-	isInserted(email string) error
-	Login(email string) (string, error)
-}
-
 type userRepo struct {
 	driver, url string
 }
