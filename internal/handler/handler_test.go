@@ -112,15 +112,15 @@ func TestUserHandler_SignUpHandler(t *testing.T) {
 }
 
 func TestUserHandler_Login(t *testing.T) {
-	type ServicemockBehaviour func(s *mock_service.MockUserService, user models.UserDTO)
-	type MiddlewaremockBehaviour func(m *mock_middleware.MockMiddleware, user models.UserDTO)
+	type ServiceMockBehaviour func(s *mock_service.MockUserService, user models.UserDTO)
+	type MiddlewareMockBehaviour func(m *mock_middleware.MockMiddleware, user models.UserDTO)
 
 	testTable := []struct {
 		name                    string
 		inputBody               string
 		inputUser               models.UserDTO
-		ServicemockBehaviour    ServicemockBehaviour
-		MiddlewaremockBehaviour MiddlewaremockBehaviour
+		ServiceMockBehaviour    ServiceMockBehaviour
+		MiddlewareMockBehaviour MiddlewareMockBehaviour
 		expectedStatusCode      int
 		expectedResponseBody    string
 	}{
@@ -131,10 +131,10 @@ func TestUserHandler_Login(t *testing.T) {
 				Email:    "test",
 				Password: "qwerty",
 			},
-			ServicemockBehaviour: func(s *mock_service.MockUserService, user models.UserDTO) {
+			ServiceMockBehaviour: func(s *mock_service.MockUserService, user models.UserDTO) {
 				s.EXPECT().Login(user).Return(nil)
 			},
-			MiddlewaremockBehaviour: func(m *mock_middleware.MockMiddleware, user models.UserDTO) {
+			MiddlewareMockBehaviour: func(m *mock_middleware.MockMiddleware, user models.UserDTO) {
 				m.EXPECT().GenerateToken(user).Return("token", nil)
 			},
 			expectedStatusCode:   200,
@@ -147,10 +147,10 @@ func TestUserHandler_Login(t *testing.T) {
 				Email: "test",
 			},
 
-			ServicemockBehaviour: func(s *mock_service.MockUserService, user models.UserDTO) {
+			ServiceMockBehaviour: func(s *mock_service.MockUserService, user models.UserDTO) {
 
 			},
-			MiddlewaremockBehaviour: func(m *mock_middleware.MockMiddleware, user models.UserDTO) {
+			MiddlewareMockBehaviour: func(m *mock_middleware.MockMiddleware, user models.UserDTO) {
 			},
 			expectedStatusCode:   400,
 			expectedResponseBody: `{"error": "Invalid JSON"}`,
@@ -162,10 +162,10 @@ func TestUserHandler_Login(t *testing.T) {
 				Email:    "test",
 				Password: "qwerty",
 			},
-			ServicemockBehaviour: func(s *mock_service.MockUserService, user models.UserDTO) {
+			ServiceMockBehaviour: func(s *mock_service.MockUserService, user models.UserDTO) {
 				s.EXPECT().Login(user).Return(nil)
 			},
-			MiddlewaremockBehaviour: func(m *mock_middleware.MockMiddleware, user models.UserDTO) {
+			MiddlewareMockBehaviour: func(m *mock_middleware.MockMiddleware, user models.UserDTO) {
 				m.EXPECT().GenerateToken(user).Return("token", errors.New("middleware error"))
 			},
 			expectedStatusCode:   500,
@@ -178,10 +178,10 @@ func TestUserHandler_Login(t *testing.T) {
 				Email:    "test",
 				Password: "qwerty",
 			},
-			ServicemockBehaviour: func(s *mock_service.MockUserService, user models.UserDTO) {
+			ServiceMockBehaviour: func(s *mock_service.MockUserService, user models.UserDTO) {
 				s.EXPECT().Login(user).Return(errors.New("service error"))
 			},
-			MiddlewaremockBehaviour: func(m *mock_middleware.MockMiddleware, user models.UserDTO) {
+			MiddlewareMockBehaviour: func(m *mock_middleware.MockMiddleware, user models.UserDTO) {
 			},
 			expectedStatusCode:   500,
 			expectedResponseBody: `{"error": "Failed to login. Check your email and password"}`,
@@ -197,8 +197,8 @@ func TestUserHandler_Login(t *testing.T) {
 			service := mock_service.NewMockUserService(c)
 			middleware := mock_middleware.NewMockMiddleware(c)
 
-			testCase.ServicemockBehaviour(service, testCase.inputUser)
-			testCase.MiddlewaremockBehaviour(middleware, testCase.inputUser)
+			testCase.ServiceMockBehaviour(service, testCase.inputUser)
+			testCase.MiddlewareMockBehaviour(middleware, testCase.inputUser)
 
 			w := httptest.NewRecorder()
 			ctx, _ := gin.CreateTestContext(w)
@@ -210,6 +210,193 @@ func TestUserHandler_Login(t *testing.T) {
 			userHandler := &userHandler{userService: service, middleware: middleware}
 
 			userHandler.Login(ctx)
+
+			assert.Equal(t, testCase.expectedStatusCode, w.Code)
+			assert.JSONEq(t, testCase.expectedResponseBody, w.Body.String())
+
+		})
+	}
+
+}
+
+func TestLeaderboarHandler_GetLeaderboard(t *testing.T) {
+
+	type LeaderboardMockBehaviour func(s *mock_service.MockLeaderboardService)
+	//type MiddlewareMockBehaviour func(m *mock_middleware.MockMiddleware)
+
+	testTable := []struct {
+		name                     string
+		LeaderboardMockBehaviour LeaderboardMockBehaviour
+		expectedStatusCode       int
+		expectedResponseBody     string
+		//MiddlewareMockBehaviour MiddlewareMockBehaviour
+	}{
+		{
+			name: "OK",
+			LeaderboardMockBehaviour: func(s *mock_service.MockLeaderboardService) {
+				s.EXPECT().GetLeaderboard().Return([]models.LeaderboardEntry{
+					{"player1", 10},
+					{"player2", 9},
+				}, nil)
+			},
+			expectedStatusCode:   200,
+			expectedResponseBody: `[{"nickname":"player1","record":10},{"nickname":"player2","record":9}]`,
+		},
+		{
+			name: "Internal Server Error",
+			LeaderboardMockBehaviour: func(s *mock_service.MockLeaderboardService) {
+				s.EXPECT().GetLeaderboard().Return(nil, errors.New("service error"))
+			},
+			expectedStatusCode:   500,
+			expectedResponseBody: `{"error":"Failed to get leaderboard"}`,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+
+			c := gomock.NewController(t)
+			defer c.Finish()
+
+			service := mock_service.NewMockLeaderboardService(c)
+
+			testCase.LeaderboardMockBehaviour(service)
+
+			w := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(w)
+
+			lrHandler := &leaderboarHandler{lrService: service}
+
+			lrHandler.GetLeaderboard(ctx)
+
+			assert.Equal(t, testCase.expectedStatusCode, w.Code)
+			assert.JSONEq(t, testCase.expectedResponseBody, w.Body.String())
+
+		})
+	}
+
+}
+
+func TestLeaderboarHandler_UpdateRecord(t *testing.T) {
+	type LeaderboardMockBehaviour func(s *mock_service.MockLeaderboardService, record models.RecordDTO)
+	testTable := []struct {
+		name                     string
+		inputBody                string
+		inputRecord              models.RecordDTO
+		ctxEmailKey              interface{}
+		LeaderboardMockBehaviour LeaderboardMockBehaviour
+		expectedStatusCode       int
+		expectedResponseBody     string
+	}{
+		{
+			name:      "OK",
+			inputBody: `{"email":"test","record":1}`,
+			inputRecord: models.RecordDTO{
+				Email:  "test",
+				Record: 1,
+			},
+			ctxEmailKey: "test",
+			LeaderboardMockBehaviour: func(s *mock_service.MockLeaderboardService, record models.RecordDTO) {
+				s.EXPECT().UpdateRecord(record).Return(nil)
+			},
+			expectedStatusCode:   200,
+			expectedResponseBody: `{"message": "Record updated successfully"}`,
+		},
+		{
+			name:      "Invalid JSON",
+			inputBody: `{"email":"test","record":"1""}`, //record string, вместо int
+			inputRecord: models.RecordDTO{
+				Email:  "test",
+				Record: 1,
+			},
+			ctxEmailKey: "test",
+			LeaderboardMockBehaviour: func(s *mock_service.MockLeaderboardService, record models.RecordDTO) {
+
+			},
+			expectedStatusCode:   400,
+			expectedResponseBody: `{"error": "Invalid JSON"}`,
+		},
+		{
+			name:      "No email in your token",
+			inputBody: `{"email":"test","record":1}`,
+			inputRecord: models.RecordDTO{
+				Email:  "test",
+				Record: 1,
+			},
+			ctxEmailKey: nil,
+			LeaderboardMockBehaviour: func(s *mock_service.MockLeaderboardService, record models.RecordDTO) {
+			},
+			expectedStatusCode:   400,
+			expectedResponseBody: `{"error": "No email in your token"}`,
+		},
+		{
+			name:      "Invalid email in your token",
+			inputBody: `{"email":"test","record":1}`,
+			inputRecord: models.RecordDTO{
+				Email:  "test",
+				Record: 1,
+			},
+			ctxEmailKey: 123,
+			LeaderboardMockBehaviour: func(s *mock_service.MockLeaderboardService, record models.RecordDTO) {
+
+			},
+			expectedStatusCode:   400,
+			expectedResponseBody: `{"error": "Invalid email in your token"}`,
+		},
+		{
+			name:      "Suspicious activity",
+			inputBody: `{"email":"test","record":1}`,
+			inputRecord: models.RecordDTO{
+				Email:  "test",
+				Record: 1,
+			},
+			ctxEmailKey: "fake",
+			LeaderboardMockBehaviour: func(s *mock_service.MockLeaderboardService, record models.RecordDTO) {
+
+			},
+			expectedStatusCode:   400,
+			expectedResponseBody: `{"error": "Suspicious activity"}`,
+		},
+		{
+			name:      "Failed to update your record",
+			inputBody: `{"email":"test","record":1}`,
+			inputRecord: models.RecordDTO{
+				Email:  "test",
+				Record: 1,
+			},
+			ctxEmailKey: "test",
+			LeaderboardMockBehaviour: func(s *mock_service.MockLeaderboardService, record models.RecordDTO) {
+				s.EXPECT().UpdateRecord(record).Return(errors.New("service error"))
+			},
+			expectedStatusCode:   500,
+			expectedResponseBody: `{"message": "Failed to update your record"}`,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+
+			c := gomock.NewController(t)
+			defer c.Finish()
+
+			w := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(w)
+
+			if testCase.ctxEmailKey != nil {
+				ctx.Set("user_email", testCase.ctxEmailKey)
+			}
+
+			req := httptest.NewRequest("PUT", "/leaderboard/update", strings.NewReader(testCase.inputBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			ctx.Request = req
+
+			service := mock_service.NewMockLeaderboardService(c)
+			testCase.LeaderboardMockBehaviour(service, testCase.inputRecord)
+
+			lrHandler := &leaderboarHandler{lrService: service}
+
+			lrHandler.UpdateRecord(ctx)
 
 			assert.Equal(t, testCase.expectedStatusCode, w.Code)
 			assert.JSONEq(t, testCase.expectedResponseBody, w.Body.String())

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"EphemoraApi/internal/controllers"
+	"EphemoraApi/internal/handler"
 	"EphemoraApi/internal/middleware"
 	"EphemoraApi/internal/repository"
-	"EphemoraApi/internal/services"
+	"EphemoraApi/internal/service"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -30,12 +30,12 @@ func main() {
 	mid := middleware.NewMiddleware()
 
 	userRepo := repository.NewUserRepo(dbDriver, dbUrl)
-	userService := services.NewUserService(userRepo)
-	userController := controllers.NewUserController(userService, mid)
+	userService := service.NewUserService(userRepo)
+	userController := handler.NewUserHandler(userService, mid)
 
 	leaderboardRepo := repository.NewLeaderboardRepo(dbDriver, dbUrl)
-	leaderboardService := services.NewLeaderboardService(leaderboardRepo)
-	leaderboardController := controllers.NewLeaderboardController(leaderboardService)
+	leaderboardService := service.NewLeaderboardService(leaderboardRepo)
+	leaderboardController := handler.NewLeaderboardHandler(leaderboardService)
 
 	server.POST("/users/signUp", userController.SignUp)
 	server.POST("/users/login", userController.Login)
