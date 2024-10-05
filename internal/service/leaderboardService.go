@@ -1,15 +1,10 @@
-package services
+package service
 
 import (
 	"EphemoraApi/internal/models"
 	"EphemoraApi/internal/repository"
 	"time"
 )
-
-type LeaderboardService interface {
-	UpdateRecord(recordDTO models.RecordDTO) error
-	GetLeaderboard() ([]models.LeaderboardEntry, error)
-}
 
 type leaderboardService struct {
 	lrRepo repository.LeaderboardRepo

@@ -1,28 +1,23 @@
-package controllers
+package handler
 
 import (
 	"EphemoraApi/internal/middleware"
 	"EphemoraApi/internal/models"
-	"EphemoraApi/internal/services"
+	"EphemoraApi/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-type UserController interface {
-	SignUp(c *gin.Context)
-	Login(c *gin.Context)
-}
-
-type userController struct {
-	userService services.UserService
+type userHandler struct {
+	userService service.UserService
 	middleware  middleware.Middleware
 }
 
-func NewUserController(userService services.UserService, middleware middleware.Middleware) UserController {
-	return &userController{userService, middleware}
+func NewUserHandler(userService service.UserService, middleware middleware.Middleware) UserHandler {
+	return &userHandler{userService, middleware}
 }
 
-func (uC *userController) SignUp(c *gin.Context) {
+func (uC *userHandler) SignUp(c *gin.Context) {
 	var newUser models.User
 	if err := c.ShouldBindJSON(&newUser); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid JSON"})
@@ -37,7 +32,7 @@ func (uC *userController) SignUp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User added successfully"})
 }
 
-func (uC *userController) Login(c *gin.Context) {
+func (uC *userHandler) Login(c *gin.Context) {
 
 	var user models.UserDTO
 

@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"EphemoraApi/internal/models"
@@ -8,11 +8,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
-
-type UserService interface {
-	AddUser(user models.User) error
-	Login(user models.UserDTO) error
-}
 
 type userService struct {
 	repo repository.UserRepo

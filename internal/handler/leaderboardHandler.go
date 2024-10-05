@@ -1,27 +1,21 @@
-package controllers
+package handler
 
 import (
 	"EphemoraApi/internal/models"
-	"EphemoraApi/internal/services"
-	"net/http"
-
+	"EphemoraApi/internal/service"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
-type LeaderboardConntroller interface {
-	UpdateRecord(c *gin.Context)
-	GetLeaderboard(c *gin.Context)
+type leaderboarHandler struct {
+	lrService service.LeaderboardService
 }
 
-type leaderboardController struct {
-	lrService services.LeaderboardService
+func NewLeaderboardHandler(service service.LeaderboardService) LeaderboardHandler {
+	return &leaderboarHandler{service}
 }
 
-func NewLeaderboardController(service services.LeaderboardService) LeaderboardConntroller {
-	return &leaderboardController{service}
-}
-
-func (lrController *leaderboardController) UpdateRecord(c *gin.Context) {
+func (lrController *leaderboarHandler) UpdateRecord(c *gin.Context) {
 	var newRecord models.RecordDTO
 	if err := c.ShouldBindJSON(&newRecord); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid JSON"})
@@ -51,7 +45,7 @@ func (lrController *leaderboardController) UpdateRecord(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Record updated successfully"})
 }
 
-func (lrController *leaderboardController) GetLeaderboard(c *gin.Context) {
+func (lrController *leaderboarHandler) GetLeaderboard(c *gin.Context) {
 	leaderboard, err := lrController.lrService.GetLeaderboard()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get leaderboard"})

@@ -6,11 +6,6 @@ import (
 	"errors"
 )
 
-type LeaderboardRepo interface {
-	UpdateRecord(record models.Record) error
-	SelectLeaderboard() ([]models.LeaderboardEntry, error)
-}
-
 type leaderboarRepo struct {
 	driver, url string
 }
