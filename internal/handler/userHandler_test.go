@@ -3,6 +3,7 @@ package handler
 import (
 	"EphemoraApi/internal/models"
 	mock_service "EphemoraApi/internal/service/mocks"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -52,6 +53,20 @@ func TestUserHandler_SignUpHandler(t *testing.T) {
 			},
 			expectedStatusCode:   400,
 			expectedResponseBody: `{"error":"Invalid JSON"}`,
+		},
+		{
+			name:      "Internal Server Error",
+			inputBody: `{"email":"test","password":"qwerty","nickname":"nick"}`,
+			inputUser: models.User{
+				Email:    "test",
+				Password: "qwerty",
+				Nickname: "nick",
+			},
+			mockBehaviour: func(s *mock_service.MockUserService, user models.User) {
+				s.EXPECT().AddUser(user).Return(errors.New("service error"))
+			},
+			expectedStatusCode:   500,
+			expectedResponseBody: `{"error:": "Failed to add user. Maybe email is already taken"}`,
 		},
 	}
 
